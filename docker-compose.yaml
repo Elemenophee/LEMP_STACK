@@ -1,0 +1,49 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: nginx_container
+    ports:
+      - "8080:80"   # Access Laravel + Vue in browser
+    volumes:
+      - ./site/laravel-app:/var/www/laravel-app:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: ./site/laravel-app
+      dockerfile: Dockerfile
+    container_name: php_container
+    volumes:
+      - ./site/laravel-app:/var/www/laravel-app
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:11.3
+    container_name: mariadb_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: laravel_db
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: laravel_pass
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin_container
+    restart: always
+    ports:
+      - "8081:80"   # Access phpMyAdmin in browser
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: laravel_user
+      PMA_PASSWORD: laravel_pass
+    depends_on:
+      - mariadb
+
+volumes:
+  db_data:
